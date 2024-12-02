@@ -38,17 +38,17 @@ export default function UpKeepPage() {
             location,
             description,
             selectedRepairs,
-            timestamp: new Date(),
-            uid: auth.currentUser.uid,
+            idUsuario: auth.currentUser.uid,
         };
 
         try {
-            await addDoc(collection(db, "repairs"), repairData);
+            await addDoc(collection(db, "upkeep"), repairData);
             alert("Reparo enviado com sucesso!");
             // Reset form
             setLocation('');
             setDescription('');
             setSelectedRepairs([]);
+            window.location.href = "/home";
         } catch (error) {
             console.error("Erro ao enviar reparo:", error);
             alert("Houve um erro ao enviar o reparo. Tente novamente.");
@@ -100,6 +100,7 @@ export default function UpKeepPage() {
                             setLocation('');
                             setDescription('');
                             setSelectedRepairs([]);
+                            window.location.href = "/home";
                         }}>Cancelar</button>
                     </div>
                 </form>

@@ -35,26 +35,25 @@ export default function HomePage(){
     const [userLogged, setUserLogged] = useState(null);
 
     useEffect(() => {
-        const fetchCurrentUser = async () => {
-          try {
-            if (auth.currentUser) {
-              const userRef = doc(db, "users", auth.currentUser.uid);
+        const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+          if (currentUser) {
+            try {
+              const userRef = doc(db, "users", currentUser.uid);
               const userSnap = await getDoc(userRef);
-    
               if (userSnap.exists()) {
                 setUserLogged(userSnap.data());
-                console.log(userLogged);
+                localStorage.setItem("userLogged", JSON.parse(userLogged));
               } else {
-                console.log("Usuário não encontrado!");
+                console.log("Usuário não encontrado.");
               }
+            } catch (error) {
+              console.error("Erro ao buscar o usuário:", error);
             }
-          } catch (error) {
-            console.error("Erro ao buscar o usuário:", error);
           }
-        };
-    
-        fetchCurrentUser();
-      }, []);
+        });
+      
+        return () => unsubscribe();
+      }, []);           
 
     const service_items = [
         {Icon: manutencaoIcon, Title: "Manutenção", Nav: "/upKeep"},

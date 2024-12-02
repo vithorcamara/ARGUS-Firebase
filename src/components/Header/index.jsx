@@ -16,6 +16,7 @@ export default function Header() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      localStorage.removeItem("userLogged")
       window.location.href = "/login";
     } catch (error) {
       console.error("Erro ao fazer logout:", error.message);

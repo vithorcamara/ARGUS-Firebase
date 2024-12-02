@@ -1,8 +1,74 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../../components/Header";
 import "./style.css";
+import { db, auth } from '../../services/firebaseConfig';
+import { collection, addDoc } from "firebase/firestore";
 
 export default function ReservationsPage() {
+  const [userUid, setUserUid] = useState(null); // Estado para armazenar o uid do usuário
+  const [formData, setFormData] = useState({
+    "reservation-period": "",
+    location: "",
+    date: "",
+    description: "",
+    idUsuario: ""
+  });
+
+  // Função para lidar com a mudança no estado da autenticação
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      if (user) {
+        setUserUid(user.uid); // Define o uid do usuário
+      } else {
+        setUserUid(null); // Se não estiver autenticado, zera o uid
+      }
+    });
+
+    return () => unsubscribe(); // Limpa a subscrição quando o componente for desmontado
+  }, []);
+
+  useEffect(() => {
+    if (userUid) {
+      setFormData(prevData => ({ ...prevData, idUsuario: userUid }));
+    }
+  }, [userUid]);
+
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setFormData((prevData) => ({ ...prevData, [id]: value }));
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "Não selecionada";
+    const [year, month, day] = date.split("-");
+    return `${day}/${month}/${year}`;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log(formData);
+    try {
+      await addDoc(collection(db, "reservation"), formData);
+      alert("Reserva enviada com sucesso!");
+      // Reset form
+      setFormData({
+        "reservation-period": "",
+        location: "",
+        date: "",
+        description: "",
+        idUsuario: userUid // Atualiza com o uid do usuário
+      });
+      window.location.href = "/home";
+    } catch (error) {
+      console.error("Erro ao enviar reserva:", error);
+      alert("Houve um erro ao enviar a reserva. Tente novamente.");
+    }
+  };
+
+  if (!userUid) {
+    return <div></div>;
+  }
+  
   const fields = [
     {
       Id: "reservation-period",
@@ -21,30 +87,12 @@ export default function ReservationsPage() {
     { Id: "date", Label: "Selecione a data*", Type: "date", Require: true },
   ];
 
-  const [formData, setFormData] = useState({
-    "reservation-period": "",
-    location: "",
-    date: "",
-  });
-
-  const handleChange = (e) => {
-    const { id, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [id]: value }));
-  };
-
-  // Função para formatar a data de YYYY-MM-DD para DD/MM/YYYY
-  const formatDate = (date) => {
-    if (!date) return "Não selecionada";
-    const [year, month, day] = date.split("-");
-    return `${day}/${month}/${year}`;
-  };
-
   return (
     <>
       <Header />
       <section className="reservations-page">
         <h1>Bem-vindo! Solicite sua reserva</h1>
-        <form className="reservations-forms" action="#" method="POST">
+        <form className="reservations-forms" onSubmit={handleSubmit} method="POST">
           <div className="fields-group">
             {fields.map((field, index) => (
               <div key={index} className="field-container">
@@ -85,6 +133,7 @@ export default function ReservationsPage() {
                 name="description"
                 rows="4"
                 placeholder="Descreva aqui o que vai acontecer"
+                onChange={handleChange}
               ></textarea>
             </div>
           </div>
@@ -116,7 +165,7 @@ export default function ReservationsPage() {
             <button
               type="reset"
               onClick={() =>
-                setFormData({ "reservation-period": "", location: "", date: "" })
+                setFormData({ "reservation-period": "", location: "", date: "", description: "" })
               }
             >
               Cancelar

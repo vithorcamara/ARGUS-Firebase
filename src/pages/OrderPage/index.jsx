@@ -1,79 +1,62 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { db, auth } from '../../services/firebaseConfig';
 import Header from "../../components/Header";
 import OrderCard from "../../components/OrderCard";
 import gateIcon from "../../assets/gateIcon.png";
-import Order1 from "../../assets/OrderImg/order1.svg";
-import Order2 from "../../assets/OrderImg/order2.svg";
-import Order3 from "../../assets/OrderImg/order3.svg";
 import "./style.css";
 
 export default function OrderPage() {
   const [orderSend, setOrderSend] = useState(false);
-  const orders = [
-    {
-      id: 123456,
-      image: Order1,
-      type: "Pacote",
-      recipient: "Neide da Silva",
-      registerNumber: "Não informado",
-      receivedTime: "Segunda-feira, 17:32",
-      receivedBy: "Ferdinando Lima",
-    },
-    {
-      id: 654321,
-      image: Order2,
-      type: "Pacote",
-      recipient: "Neide da Silva",
-      registerNumber: "Não informado",
-      receivedTime: "Quinta-feira, 10:20",
-      receivedBy: "Ferdinando Lima",
-    },
-    {
-      id: 148952,
-      image: Order3,
-      type: "Pacote",
-      recipient: "Neide da Silva",
-      registerNumber: "Não informado",
-      receivedTime: "Quarta-feira, 13:00",
-      receivedBy: "Robson Barbosa",
-    },
-    {
-      id: 654321,
-      image: Order2,
-      type: "Pacote",
-      recipient: "Neide da Silva",
-      registerNumber: "Não informado",
-      receivedTime: "Quinta-feira, 10:20",
-      receivedBy: "Ferdinando Lima",
-    },
-    {
-      id: 148952,
-      image: Order3,
-      type: "Pacote",
-      recipient: "Neide da Silva",
-      registerNumber: "Não informado",
-      receivedTime: "Quarta-feira, 13:00",
-      receivedBy: "Robson Barbosa",
-    },
-    {
-      id: 654321,
-      image: Order2,
-      type: "Pacote",
-      recipient: "Neide da Silva",
-      registerNumber: "Não informado",
-      receivedTime: "Quinta-feira, 10:20",
-      receivedBy: "Ferdinando Lima",
-    },
-    {
-      id: 148952,
-      image: Order3,
-      type: "Pacote",
-      recipient: "Neide da Silva",
-      registerNumber: "Não informado",
-      receivedTime: "Quarta-feira, 13:00",
-      receivedBy: "Robson Barbosa",
-    },
-  ];
+  const [orders, setOrders] = useState([]); // State para armazenar as orders
+  const [isLoading, setIsLoading] = useState(true); // Estado de carregamento
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      setIsLoading(true);
+      try {
+        const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+          if (currentUser) {
+            try {
+              const userRef = doc(db, "users", currentUser.uid);
+              const userSnapshot = await getDoc(userRef);
+  
+              if (userSnapshot.exists()) {
+                const userCpf = userSnapshot.data().cpf;
+                const ordersRef = collection(db, "order");
+                const ordersQuery = query(ordersRef, where("recipient", "==", userCpf));
+                const ordersSnapshot = await getDocs(ordersQuery);
+                console.log(ordersSnapshot, userCpf)
+  
+                const fetchedOrders = ordersSnapshot.docs.map((doc) => ({
+                  id: doc.id,
+                  ...doc.data(),
+                }));
+  
+                setOrders(fetchedOrders);
+              } else {
+                console.error("Usuário não encontrado no Firestore.");
+              }
+            } catch (error) {
+              console.error("Erro ao buscar encomendas:", error);
+            }
+          } else {
+            console.log("Nenhum usuário autenticado.");
+          }
+        });
+  
+        return () => unsubscribe();
+      } catch (error) {
+        console.error("Erro geral no fetchOrders:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    fetchOrders();
+  }, []);
+  
 
   const fields = [
     {
@@ -133,27 +116,27 @@ export default function OrderPage() {
     }));
   };
 
-  const [isChatOpen, setIsChatOpen] = useState(false);
-
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen);
   };
 
-  const submitSend = () => {
-
+  const submitSend = (e) => {
+    e.preventDefault();
+    console.log("Encomenda enviada:", formData);
+    resetSend();
   };
 
   const resetSend = () => {
     setFormData({
-        reservation_code: "",
-        record_number: "",
-        type: "",
-        date: "",
-        recipient: "",
-        received_by: "",
-        description: "",
-      });
-      setOrderSend(!orderSend);
+      reservation_code: "",
+      record_number: "",
+      type: "",
+      date: "",
+      recipient: "",
+      received_by: "",
+      description: "",
+    });
+    setOrderSend(false); // Fechar o formulário ao resetar
   };
 
   return (
@@ -191,73 +174,77 @@ export default function OrderPage() {
         </div>
 
         <div className="main-content">
-            {orderSend ? (
-              <form className="order-forms" action="#" method="POST">
-                <div className="fields-group">
-                  {fields.map((field, index) => (
-                    <div key={index} className="field-container">
-                      <label htmlFor={field.Id}>{field.Label}</label>
-                      {field.Type === "select" ? (
-                        <select
-                          id={field.Id}
-                          name={field.Id}
-                          required={field.Require}
-                          value={formData[field.Id]}
-                          onChange={handleChange}
-                        >
-                          <option value="" disabled>
-                            Selecione
+          {orderSend ? (
+            <form className="order-forms" onSubmit={submitSend}>
+              <div className="fields-group">
+                {fields.map((field, index) => (
+                  <div key={index} className="field-container">
+                    <label htmlFor={field.Id}>{field.Label}</label>
+                    {field.Type === "select" ? (
+                      <select
+                        id={field.Id}
+                        name={field.Id}
+                        required={field.Require}
+                        value={formData[field.Id]}
+                        onChange={handleChange}
+                      >
+                        <option value="" disabled>
+                          Selecione
+                        </option>
+                        {field.Options.map((option, idx) => (
+                          <option key={idx} value={option}>
+                            {option}
                           </option>
-                          {field.Options.map((option, idx) => (
-                            <option key={idx} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          id={field.Id}
-                          name={field.Id}
-                          type={field.Type}
-                          required={field.Require}
-                          value={formData[field.Id]}
-                          onChange={handleChange}
-                        />
-                      )}
-                    </div>
-                  ))}
-                  <label className="poppins-bold" htmlFor="description">
-                    Descrição
-                  </label>
-                  <div className="description-container">
-                    <textarea
-                      id="description"
-                      name="description"
-                      rows="4"
-                      value={formData.description}
-                      onChange={handleChange}
-                      placeholder="Descreva aqui..."
-                    ></textarea>
-                  </div>
-                </div>
-                <div className="buttons">
-                  <button type="submit" onSubmit={() => {setOrderSend(!orderSend);}}>Enviar</button>
-                  <button type="reset" onClick={resetSend} >Cancelar</button>
-                </div>
-              </form>
-            ) : (
-                <>
-                    <div>
-                        <h1 className="page-title">Bem-vindo! Aqui estará registrado a entrega de suas encomendas.</h1>
-                        <button className="register-button" onClick={() => {setOrderSend(!orderSend);}}>Cadastrar Nova Encomenda</button>
-                    </div>
-                    <main className="order-list">
-                        {orders.map((order, index) => (
-                            <OrderCard key={index} order={order} />
                         ))}
-                    </main>
-                </>
-            )}
+                      </select>
+                    ) : (
+                      <input
+                        id={field.Id}
+                        name={field.Id}
+                        type={field.Type}
+                        required={field.Require}
+                        value={formData[field.Id]}
+                        onChange={handleChange}
+                      />
+                    )}
+                  </div>
+                ))}
+                <label className="poppins-bold" htmlFor="description">
+                  Descrição
+                </label>
+                <div className="description-container">
+                  <textarea
+                    id="description"
+                    name="description"
+                    rows="4"
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder="Descreva aqui..."
+                  ></textarea>
+                </div>
+              </div>
+              <div className="buttons">
+                <button type="submit">Enviar</button>
+                <button type="button" onClick={resetSend}>Cancelar</button>
+              </div>
+            </form>
+          ) : (
+            <>
+              <div>
+                <h1 className="page-title">Bem-vindo! Aqui estará registrado a entrega de suas encomendas.</h1>
+                <button className="register-button" onClick={() => setOrderSend(true)}>Cadastrar Nova Encomenda</button>
+              </div>
+              <main className="order-list">
+                {isLoading ? (
+                  <p>Carregando encomendas...</p>
+                ) : orders.length === 0 ? (
+                  <p>Nenhuma encomenda encontrada.</p>
+                ) : (
+                  orders.map((order, index) => <OrderCard key={index} order={order} />)
+                )}
+              </main>
+            </>
+          )}
         </div>
       </div>
     </>

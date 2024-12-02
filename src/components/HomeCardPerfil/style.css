@@ -32,6 +32,8 @@
 .card-profile img{
     height: 5vh;
     width: 5vh;
+    border-radius: 5vh;
+    border: 3px solid var(--medium-blue);
 }
 
 @media (max-width:1200px) {

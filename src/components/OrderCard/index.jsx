@@ -31,7 +31,7 @@ export default function OrderCard({ order }) {
                 </p>
                 <p>
                     <strong>Hora do recebimento:</strong>
-                    <span>{order.receivedTime}</span>
+                    <span>{order.receivedTime.toDate().toLocaleDateString()} {order.receivedTime.toDate().toLocaleTimeString()}</span>
                 </p>
                 <p>
                     <strong>Recebido por:</strong>

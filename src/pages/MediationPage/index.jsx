@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import Header from '../../components/Header';
 import './style.css';
+import { db, auth } from '../../services/firebaseConfig';
+import { collection, addDoc, getDoc, doc } from "firebase/firestore";
 
 const genAI = new GoogleGenerativeAI("AIzaSyCrdvZOg_tiVVLbrsLDKStSe_t_ikAhLUI");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -9,9 +11,11 @@ const chat = model.startChat({ history: [] });
 
 export default function MediationPage() {
     const [chatVisible, setChatVisible] = useState(false);
+    
     const [messages, setMessages] = useState([
         { sender: "Assistente", text: "Como posso ajudar você?", timestamp: Date.now() }
-    ]); // Mensagens iniciais
+    ]);
+
     const [currentMessage, setCurrentMessage] = useState("");
 
     const toggleChat = () => {
@@ -27,14 +31,11 @@ export default function MediationPage() {
         { Id: "status", Label: "Status", Type: "select", Require: false, Options: ["Em andamento", "Cessado"] },
     ];
 
-    // Função para enviar mensagem à API do Gemini (OpenAI)
     const sendMessageToGemini = async (userMessage) => {
         try {
-            // Chame o método sendMessage
             const res = await chat.sendMessage(`Você é um assistente de mediação de conflitos. Responda de forma curta apenas com texto: ${userMessage}`);
             const text = res?.response?.candidates?.[0]?.content?.parts?.[0]?.text;
             
-            // Se o retorno já for JSON, não use .json()
             if (text) {
                 return text;
             } else {
@@ -45,9 +46,7 @@ export default function MediationPage() {
             return "Desculpe, ocorreu um erro ao processar sua mensagem.";
         }
     };
-    
 
-    // Função para gerenciar envio de mensagens
     const handleSendMessage = async () => {
         if (currentMessage.trim() !== "") {
             const userMessage = {
@@ -55,10 +54,9 @@ export default function MediationPage() {
                 text: currentMessage,
                 timestamp: Date.now(),
             };
-            setMessages([...messages, userMessage]); // Adiciona a mensagem do usuário
-            setCurrentMessage(""); // Limpa o campo de texto
+            setMessages([...messages, userMessage]); 
+            setCurrentMessage(""); 
 
-            // Envia a mensagem ao Gemini e adiciona a resposta ao chat
             const aiResponse = await sendMessageToGemini(currentMessage);
             const geminiMessage = {
                 sender: "Assistente",
@@ -69,14 +67,56 @@ export default function MediationPage() {
         }
     };
 
+    const [formValues, setFormValues] = useState({
+        "data-ocorrencia": "",
+        "tipo-conflito": "",
+        "onde-ocorreu": "",
+        envolvencia: "",
+        urgencia: "",
+        status: "",
+        description: "",
+        idUsuario: auth.currentUser ? auth.currentUser.uid : ""
+    });
+
+    const handleChange = (field, value) => {
+        setFormValues((prevValues) => ({
+            ...prevValues,
+            [field]: value,
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            console.log(formValues)
+            await addDoc(collection(db, "mediation"), formValues);
+            alert("Mediação enviada com sucesso!");
+            
+            setFormValues({
+                "data-ocorrencia": "",
+                "tipo-conflito": "",
+                "onde-ocorreu": "",
+                envolvencia: "",
+                urgencia: "",
+                status: "",
+                description: "",
+                idUsuario: auth.currentUser.uid
+            });
+            window.location.href = "/home";
+        } catch (error) {
+            console.error("Erro ao enviar a mediação:", error);
+            alert("Houve um erro ao enviar a mediação. Tente novamente.");
+        }
+    };
+
     return (
         <>
             <Header />
             <section className="mediation-page">
                 <h1>Bem-vindo! Informe o seu ocorrido</h1>
-                <form className="mediation-forms" action="#" method="POST">
+                <form className="mediation-forms" onSubmit={handleSubmit} method="POST">
                     <div className="fields-group">
-                        {fields.map((field, index) => (
+                         {fields.map((field, index) => (
                             <div key={index} className="field-container">
                                 <label htmlFor={field.Id}>{field.Label}</label>
                                 {field.Type !== "select" ? (
@@ -85,12 +125,21 @@ export default function MediationPage() {
                                         name={field.Id}
                                         type={field.Type}
                                         required={field.Require}
+                                        value={formValues[field.Id] || ""}
+                                        onChange={(e) => handleChange(field.Id, e.target.value)}
                                     />
                                 ) : (
-                                    <select id={field.Id} name={field.Id}>
-                                        <option>Selecione uma opção</option>
+                                    <select
+                                        id={field.Id}
+                                        name={field.Id}
+                                        value={formValues[field.Id] || ""}
+                                        onChange={(e) => handleChange(field.Id, e.target.value)}
+                                    >
+                                        <option value="">Selecione uma opção</option>
                                         {field.Options.map((option, index) => (
-                                            <option key={index} value={option.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-")}>{option}</option>
+                                            <option key={index} value={option.toLowerCase()}>
+                                                {option}
+                                            </option>
                                         ))}
                                     </select>
                                 )}
@@ -104,26 +153,36 @@ export default function MediationPage() {
                             name="description"
                             rows="4"
                             placeholder="Descreva aqui o que aconteceu"
+                            value={formValues.description || ""}
+                            onChange={(e) => handleChange("description", e.target.value)}
                         ></textarea>
                     </div>
                     <div className="buttons">
                         <button type="submit">Enviar</button>
-                        <button type="reset">Cancelar</button>
+                        <button type="reset" onClick={() => {
+                            setFormValues({
+                                "data-ocorrencia": "",
+                                "tipo-conflito": "",
+                                "onde-ocorreu": "",
+                                envolvencia: "",
+                                urgencia: "",
+                                status: "",
+                                description: "",
+                                idUsuario: auth.currentUser.uid
+                            })
+                        }}>Cancelar</button>
                     </div>
                 </form>
             </section>
 
-            {/* Botão Flutuante */}
             <button className="floating-button" onClick={toggleChat}>
                 Chat
             </button>
 
-            {/* Chat com IA */}
             {chatVisible && (
                 <div className={`chat-popup ${chatVisible ? 'visible' : ''}`}>
                     <h2>Assistente Virtual</h2>
                     <div className="chat-content">
-                        {/* Renderiza mensagens ordenadas por timestamp */}
                         {messages
                             .sort((a, b) => a.timestamp - b.timestamp)
                             .map((message, index) => (
@@ -135,15 +194,14 @@ export default function MediationPage() {
                                 </div>
                             ))}
                     </div>
-                    {/* Input para digitar mensagens */}
                     <textarea
                         placeholder="Digite sua mensagem..."
                         value={currentMessage}
                         onChange={(e) => setCurrentMessage(e.target.value)}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
-                                handleSendMessage(); // Envia mensagem ao pressionar Enter
-                                e.preventDefault(); // Evita quebra de linha
+                                handleSendMessage(); 
+                                e.preventDefault(); 
                             }
                         }}
                     ></textarea>
