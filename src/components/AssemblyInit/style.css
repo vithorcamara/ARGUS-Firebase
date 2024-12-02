@@ -1,0 +1,18 @@
+@import url(../../variables.css);
+
+.assembly-init{
+    padding: 1rem;
+    text-align: center;
+}
+
+.assembly-init h1 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: var(--dark-blue);
+}
+
+.assembly-init p {
+    font-size: 1rem;
+    color: var(--medium-blue);
+    margin-bottom: 2rem;
+}

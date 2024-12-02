@@ -1,0 +1,36 @@
+@import url(../../variables.css);
+@import url(../../font-styles.css);
+
+/* Estilo do cartão/botão */
+.card-comunicados-container {
+    padding: 1rem 0;
+    border: 2px solid var(--medium-blue);
+    border-radius: 15px;
+    background-color: transparent;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+}
+
+.card-comunicados-container  .card-text {
+    color: var(--main-color);
+    font-size: 0.75rem;
+    margin-left: 25px;
+    text-align: center;
+}
+
+.card-comunicados-container .card-text span{
+    font-weight: bold;
+}
+
+.comunicados-img{
+    width: 100%;
+    height: 75%;
+}
+
+@media (max-width: 1200px) {
+    .card-comunicados-container{
+        width: 300px;
+    }
+}

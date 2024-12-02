@@ -1,0 +1,242 @@
+@import url(../../variables.css);
+@import url(../../font-styles.css);
+
+/* Estilo geral */
+
+.mediation-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  min-height: 90vh;
+  background-color: var(--background-foreground-color);
+}
+
+.mediation-page h1 {
+  text-align: center;
+  font-size: 1.5rem;
+  margin: 1rem 0;
+  color: var(--dark-blue);
+}
+
+.mediation-forms {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--main-color);
+  margin-bottom: 7.5rem;
+}
+
+.mediation-forms .fields-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.mediation-forms label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.mediation-forms .description-container {
+  margin: 1.5rem 0;
+}
+
+.mediation-forms input[type="date"],
+.mediation-forms input[type="text"],
+.mediation-forms textarea,
+.mediation-forms select {
+  padding: 0.5rem;
+  border: 0.5px solid #d0cfcf;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: var(--background-foreground-color);
+  width: 100%;
+}
+
+/* Botões */
+.mediation-forms .buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.mediation-forms button[type="submit"] {
+  background-color: var(--foreground-color);
+  color: var(--background-main-color);
+  border: none;
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.mediation-forms button[type="submit"]:hover {
+  background-color: var(--web-orange-500);
+}
+
+.mediation-forms button[type="reset"] {
+  background-color: var(--medium-blue);
+  color: var(--background-main-color);
+  border: none;
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.mediation-forms button[type="reset"]:hover {
+  background-color: var(--medium-blue-hover);
+}
+
+/* Estilo base do chat */
+.chat-popup {
+  position: fixed;
+  top: 10vh;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Estilo do cabeçalho do chat */
+.chat-popup h2 {
+  background: var(--main-color);
+  color: white;
+  margin: 0;
+  padding: 10px;
+  text-align: center;
+}
+
+/* Conteúdo do chat */
+.chat-popup .chat-content {
+  padding: 10px;
+  flex: 1;
+  overflow-y: auto;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Caixa de texto */
+.chat-popup textarea {
+  width: 100%;
+  border: 1px solid #333;
+  padding: 10px;
+  outline: none;
+  resize: none;
+  height: 50px;
+}
+
+/* Botões */
+.chat-popup button {
+  width: 100%;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+}
+
+/* Botão flutuante */
+.floating-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  background-color: var(--main-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.chatbot-message{
+  max-width: 60%;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  word-wrap: break-word;
+}
+
+.chatbot-message.sent {
+  background-color: var(--light-blue);
+  align-self: flex-end;
+  text-align: right;
+  margin-left: auto;
+}
+
+.chatbot-message.received {
+  background-color: #f1f0f0;
+  align-self: flex-start;
+  text-align: left;
+  margin-right: auto;
+}
+
+.chatbot-message .timestamp{
+  color: var(--foreground-color);
+  font-size: 0.75rem;
+}
+
+.submitMessage{
+  margin: 0.25rem;
+  background-color: var(--light-blue);
+  color: var(--main-color);
+}
+
+.quitChatBot{
+  margin: 0.25rem;
+  background-color: var(--web-orange-500);
+  color: var(--main-color);
+}
+
+@media (min-width: 768px) {
+  .chat-popup {
+      width: 300px;
+      height: 90%;
+      transform: translateX(100%);
+  }
+
+  .chat-popup.visible {
+      transform: translateX(0);
+  }
+}
+
+@media (max-width: 767px) {
+  .mediation-forms .fields-group {
+    grid-template-columns: 1fr;
+  }
+  .chat-popup {
+      width: 100%;
+      height: 100%;
+      top: 0;
+      transform: translateY(100%);
+  }
+
+  .chat-popup.visible {
+      transform: translateY(0);
+  }
+}
+.mediation-forms input[type="date"]:focus,
+.mediation-forms input[type="text"]:focus,
+.mediation-forms textarea:focus,
+.mediation-forms select:focus {
+  border: 1px solid var(--web-orange-500); /* Altere para a cor laranja desejada */
+  outline: none; /* Remove o contorno padrão do foco */
+}
